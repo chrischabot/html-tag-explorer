@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML Tags</title>
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body {
+	padding-top: 50px;
+}
+
+pre {
+	background-color: #fff;
+}
+
+@media ( min-width : 768px) {
+	.sidebar {
+		position: fixed;
+		top: 51px;
+		bottom: 0;
+		left: 0;
+		z-index: 1000;
+		display: block;
+		padding: 20px;
+		overflow-x: hidden;
+		overflow-y: auto;
+		border-right: 1px solid #eee;
+	}
+	.main {
+		position: fixed;
+		top: 51px;
+		bottom: 0;
+		left: 0;
+		z-index: 1000;
+		display: block;
+		margin-top: 20px;
+		margin-bottom: 20px;
+		overflow-x: auto;
+		overflow-y: auto;	
+	}
+	
+	#parse {
+		width: 500px;
+		margin: auto;
+	}
+	#parse-input {
+		width: 420px;
+	}
+	
+}
+
+.nav-sidebar {
+	margin-right: -21px;
+	margin-bottom: 20px;
+	margin-left: -20px;
+}
+
+ul#tags-group li {
+	cursor: pointer;
+}
+
+ul#tags-group li.over {
+	background-color: #94ceff;
+	color: #fff;
+}
+
+ul#tags-group li.active {
+	background-color: #337ab7;
+	color: #fff;
+}
+
+.main pre {
+	border: none;
+}
+
+.navbar-fixed-top {
+	border-bottom: 1px solid #eee;
+}
+
+span.tag {
+	color: #000080;
+}
+
+span.highlight {
+	background-color: #94ceff;
+	border: 1px solid #337ab7;
+	padding: 2px;
+}
+
+span.attribute {
+	color: #008080;
+}
+
+span.value {
+	color: #d14;
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Explore Tags: </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+         <ul class="nav navbar-nav navbar-left"><li>
+			<form class="navbar-form" id="parse-form">
+				<div id="parse">
+					<input type="text" class="form-control" id="parse-input" placeholder="Enter url..">
+					<button class="btn btn-default" type="submit">Go!</button>
+				</div>
+			</form>
+        </li></ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Source<span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+							<li><a id="source-index" href="#">index.html</a></li>
+							<li><a id="source-parse" href="#">parse.php</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-sm-3 col-md-2 sidebar">
+				<ul class="list-group" id="tags-group">
+				</ul>
+			</div>
+			<div id="html-content" class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+				<div class="notice">Enter a URL above to explore</div>
+			</div>
+		</div>
+	</div>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+	<script>
+		(function($) {
+			$.Highlight = function() {};
+			
+			$.Highlight.prototype = {
+				init : function() {
+					var that = this;
+					$("#parse-form").submit(function(event) {
+						event.preventDefault();
+						$('#html-content').html('<div class="notice">Loading..</div>');
+						$('#tags-group').html('');
+						that.parse($('#parse-input').val());
+					});
+
+					$('#source-index').bind('click', function() {
+						$('#parse-input').val('https://www.snapsation.com/htmltags/index.html');
+						$('#parse-form').submit();						
+					});
+					$('#source-parse').bind('click', function() {
+						$('#parse-input').val('parse.php');
+						$('#parse-form').submit();						
+					});
+
+				},
+
+				parse : function(url) {
+					var that = this;
+					$.ajax({
+						url : '/htmltags/parse.php?url=' + encodeURI(url)
+					}).success(function(data) {
+						that.render(data);
+					});
+				},
+
+				render : function(data) {
+					if (data.error) {
+						$('#html-content').html('<div class="alert alert-danger" role="alert">' + data.error + '</div>');
+					} else {
+						var that = this;
+						$('#html-content').html('<pre><code>' + data.html + '</code></pre>');
+						$('#tags-group').html('');
+						for ( var key in data.tags) {
+							$('#tags-group').append('<li class="list-group-item"><span class="badge">' + data.tags[key] + '</span> ' + key + '</li>');
+						}
+						$('#tags-group li.list-group-item').bind("mouseover", function() {
+							$(this).addClass('over');
+						});
+						$('#tags-group li.list-group-item').bind("mouseout", function() {
+							$(this).removeClass('over');
+						});
+						$("#tags-group li.list-group-item").bind("click", function() {
+									$('#tags-group li.active').removeClass('active over');
+									$(this).addClass('active');
+									$('span.highlight').removeClass('highlight');
+									var tag = $(this).text().split(' ')[1];
+									$('span.tag_' + tag).addClass('highlight');
+								});
+					}
+				}
+			};
+		}(jQuery));
+		
+		var highlight = new $.Highlight();
+		highlight.init();
+	</script>
+</body>
+</html>
